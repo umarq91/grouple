@@ -1,6 +1,5 @@
-// import { GoogleAuthButton } from "@/components/global/google-oauth-button"
-// import { GoogleAuthButton } from "@/components/global/google-oauth-button"
 import SignInForm from "@/components/forms/sign-in"
+import { GoogleAuthButton } from "@/components/global/google-oauth-button"
 import { Separator } from "@/components/ui/separator"
 
 const SignInPage = () => {
@@ -19,7 +18,7 @@ const SignInPage = () => {
         </div>
         <Separator orientation="horizontal" className="bg-themeGray" />
       </div>
-      {/* <GoogleAuthButton method="signin" /> */}
+      <GoogleAuthButton method="signin" />
     </>
   )
 }

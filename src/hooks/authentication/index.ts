@@ -1,4 +1,4 @@
-// import { onSignUpUser } from "@/actions/auth"
+import { onSignUpUser } from "@/actions/auth"
 // import { SignUpSchema } from "@/components/forms/sign-up/schema"
 import { useSignIn, useSignUp } from "@clerk/nextjs"
 import { OAuthStrategy } from "@clerk/types"
@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import { SignInSchema } from "../../components/forms/sign-in/schema"
+import { SignUpSchema } from "@/components/forms/sign-up/schema"
 
 export const useAuthSignIn = () => {
   const { isLoaded, setActive, signIn } = useSignIn()
@@ -68,148 +69,149 @@ export const useAuthSignIn = () => {
   }
 }
 
-// export const useAuthSignUp = () => {
-//   const { setActive, isLoaded, signUp } = useSignUp()
-//   const [creating, setCreating] = useState<boolean>(false)
-//   const [verifying, setVerifying] = useState<boolean>(false)
-//   const [code, setCode] = useState<string>("")
+export const useAuthSignUp = () => {
+  const { setActive, isLoaded, signUp } = useSignUp();
 
-//   const {
-//     register,
-//     formState: { errors },
-//     reset,
-//     handleSubmit,
-//     getValues,
-//   } = useForm<z.infer<typeof SignUpSchema>>({
-//     resolver: zodResolver(SignUpSchema),
-//     mode: "onBlur",
-//   })
+  const [creating, setCreating] = useState<boolean>(false) // loading state
+  const [verifying, setVerifying] = useState<boolean>(false)
+  const [code, setCode] = useState<string>("")
 
-//   const router = useRouter()
+  const {
+    register,
+    formState: { errors },
+    reset,
+    handleSubmit,
+    getValues,
+  } = useForm<z.infer<typeof SignUpSchema>>({
+    resolver: zodResolver(SignUpSchema),
+    mode: "onBlur",
+  })
 
-//   const onGenerateCode = async (email: string, password: string) => {
-//     if (!isLoaded)
-//       return toast("Error", {
-//         description: "Oops! something went wrong",
-//       })
-//     try {
-//       if (email && password) {
-//         await signUp.create({
-//           emailAddress: getValues("email"),
-//           password: getValues("password"),
-//         })
+  const router = useRouter()
 
-//         await signUp.prepareEmailAddressVerification({
-//           strategy: "email_code",
-//         })
+  const onGenerateCode = async (email: string, password: string) => {
+    if (!isLoaded)
+      return toast("Error", {
+        description: "Oops! something went wrong",
+      })
+    try {
+      if (email && password) {
+        await signUp.create({
+          emailAddress: getValues("email"),
+          password: getValues("password"),
+        })
 
-//         setVerifying(true)
-//       } else {
-//         return toast("Error", {
-//           description: "No fields must be empty",
-//         })
-//       }
-//     } catch (error) {
-//       console.error(JSON.stringify(error, null, 2))
-//     }
-//   }
+        await signUp.prepareEmailAddressVerification({
+          strategy: "email_code",
+        })
 
-//   const onInitiateUserRegistration = handleSubmit(async (values) => {
-//     if (!isLoaded)
-//       return toast("Error", {
-//         description: "Oops! something went wrong",
-//       })
+        setVerifying(true)
+      } else {
+        return toast("Error", {
+          description: "No fields must be empty",
+        })
+      }
+    } catch (error) {
+      console.error(JSON.stringify(error, null, 2))
+    }
+  }
 
-//     try {
-//       setCreating(true)
-//       const completeSignUp = await signUp.attemptEmailAddressVerification({
-//         code,
-//       })
+  const onInitiateUserRegistration = handleSubmit(async (values) => {
+    if (!isLoaded)
+      return toast("Error", {
+        description: "Oops! something went wrong",
+      })
 
-//       if (completeSignUp.status !== "complete") {
-//         return toast("Error", {
-//           description: "Oops! something went wrong, status in complete",
-//         })
-//       }
+    try {
+      setCreating(true)
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
+        code,
+      })
 
-//       if (completeSignUp.status === "complete") {
-//         if (!signUp.createdUserId) return
-//         const user = await onSignUpUser({
-//           firstname: values.firstname,
-//           lastname: values.lastname,
-//           clerkId: signUp.createdUserId,
-//           image: "",
-//         })
+      if (completeSignUp.status !== "complete") {
+        return toast("Error", {
+          description: "Oops! something went wrong, status in complete",
+        })
+      }
 
-//         reset()
+      if (completeSignUp.status === "complete") {
+        if (!signUp.createdUserId) return
+        const user = await onSignUpUser({
+          firstname: values.firstname,
+          lastname: values.lastname,
+          clerkId: signUp.createdUserId,
+          image: "",
+        })
 
-//         if (user.status === 200) {
-//           toast("Success", {
-//             description: user.message,
-//           })
-//           await setActive({
-//             session: completeSignUp.createdSessionId,
-//           })
-//           router.push(`/group/create`)
-//         }
-//         if (user.status !== 200) {
-//           toast("Error", {
-//             description: user.message + "action failed",
-//           })
-//           router.refresh
-//         }
-//         setCreating(false)
-//         setVerifying(false)
-//       } else {
-//         console.error(JSON.stringify(completeSignUp, null, 2))
-//       }
-//     } catch (error) {
-//       console.error(JSON.stringify(error, null, 2))
-//     }
-//   })
+        reset()
 
-//   return {
-//     register,
-//     errors,
-//     onGenerateCode,
-//     onInitiateUserRegistration,
-//     verifying,
-//     creating,
-//     code,
-//     setCode,
-//     getValues,
-//   }
-// }
+        if (user.status === 200) {
+          toast("Success", {
+            description: user.message,
+          })
+          await setActive({
+            session: completeSignUp.createdSessionId,
+          })
+          router.push(`/group/create`)
+        }
+        if (user.status !== 200) {
+          toast("Error", {
+            description: user.message + "action failed",
+          })
+          router.refresh
+        }
+        setCreating(false)
+        setVerifying(false)
+      } else {
+        console.error(JSON.stringify(completeSignUp, null, 2))
+      }
+    } catch (error) {
+      console.error(JSON.stringify(error, null, 2))
+    }
+  })
 
-// export const useGoogleAuth = () => {
-//   const { signIn, isLoaded: LoadedSignIn } = useSignIn()
-//   const { signUp, isLoaded: LoadedSignUp } = useSignUp()
+  return {
+    register,
+    errors,
+    onGenerateCode,
+    onInitiateUserRegistration,
+    verifying,
+    creating,
+    code,
+    setCode,
+    getValues,
+  }
+}
 
-//   const signInWith = (strategy: OAuthStrategy) => {
-//     if (!LoadedSignIn) return
-//     try {
-//       return signIn.authenticateWithRedirect({
-//         strategy,
-//         redirectUrl: "/callback",
-//         redirectUrlComplete: "/callback/sign-in",
-//       })
-//     } catch (error) {
-//       console.error(error)
-//     }
-//   }
+export const useGoogleAuth = () => {
+  const { signIn, isLoaded: LoadedSignIn } = useSignIn()
+  const { signUp, isLoaded: LoadedSignUp } = useSignUp()
 
-//   const signUpWith = (strategy: OAuthStrategy) => {
-//     if (!LoadedSignUp) return
-//     try {
-//       return signUp.authenticateWithRedirect({
-//         strategy,
-//         redirectUrl: "/callback",
-//         redirectUrlComplete: "/callback/complete",
-//       })
-//     } catch (error) {
-//       console.error(error)
-//     }
-//   }
+  const signInWith = (strategy: OAuthStrategy) => {
+    if (!LoadedSignIn) return
+    try {
+      return signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: "/callback",
+        redirectUrlComplete: "/callback/sign-in",
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
-//   return { signUpWith, signInWith }
-// }
+  const signUpWith = (strategy: OAuthStrategy) => {
+    if (!LoadedSignUp) return
+    try {
+      return signUp.authenticateWithRedirect({
+        strategy,
+        redirectUrl: "/callback",
+        redirectUrlComplete: "/callback/complete",
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  return { signUpWith, signInWith }
+}
